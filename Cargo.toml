@@ -1,0 +1,6 @@
+[package]
+name = "rustorrent"
+version = "0.1.0"
+authors = ["Hiroshi Saito <saito.die@gmail.com>"]
+
+[dependencies]
