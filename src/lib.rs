@@ -1,3 +1,5 @@
+pub mod bencode;
+
 #[cfg(test)]
 mod tests {
     #[test]
