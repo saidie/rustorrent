@@ -3,13 +3,11 @@ use std::iter::Peekable;
 
 #[derive(PartialEq, Debug)]
 pub enum BenObject {
-    BenInt(i64),
-    BenStr(String),
-    BenList(Vec<BenObject>),
-    BenDict(HashMap<String, BenObject>)
+    I(i64),
+    S(String),
+    L(Vec<BenObject>),
+    D(HashMap<String, BenObject>)
 }
-
-//use bencode::BenObject::*;
 
 impl BenObject {
 
@@ -44,7 +42,7 @@ impl BenObject {
                 return benstr
             }
             let key = match benstr.unwrap() {
-                BenObject::BenStr(k) => k,
+                BenObject::S(k) => k,
                 _ => panic!("unexpected  type")
             };
             let benobj = Self::decode_benobject(bytes);
@@ -54,7 +52,7 @@ impl BenObject {
             hash.insert(key, benobj.unwrap());
         }
         if Self::skip_if_match(bytes, 'e') {
-            Ok(BenObject::BenDict(hash))
+            Ok(BenObject::D(hash))
         }
         else {
             Err("parsing dict failed: expected 'e'".to_string())
@@ -68,7 +66,7 @@ impl BenObject {
         let sign = if Self::skip_if_match(bytes, '-') { -1 } else { 1 };
         let val = sign * Self::decode_uint(bytes) as i64;
         if Self::skip_if_match(bytes, 'e') {
-            Ok(BenObject::BenInt(val))
+            Ok(BenObject::I(val))
         } else {
             Err("parsing integer failed: expected 'e'".to_string())
         }
@@ -87,7 +85,7 @@ impl BenObject {
             vec.push(benobj.unwrap())
         }
         if Self::skip_if_match(bytes, 'e') {
-            Ok(BenObject::BenList(vec))
+            Ok(BenObject::L(vec))
         }
         else {
             Err("parsing list failed: expected 'e'".to_string())
@@ -103,7 +101,7 @@ impl BenObject {
         }
         let buf: Vec<_> = bytes.by_ref().take(len).collect();
         if buf.len() == len {
-            Ok(BenObject::BenStr(String::from_utf8_lossy(buf.as_slice()).into_owned()))
+            Ok(BenObject::S(String::from_utf8_lossy(buf.as_slice()).into_owned()))
         }
         else {
             Err("parsing string failed: length mismatches".to_string())
