@@ -11,6 +11,34 @@ pub enum BenObject {
 
 impl BenObject {
 
+    pub fn as_int(&self) -> Option<i64> {
+        match *self {
+            BenObject::I(x) => Some(x),
+            _ => None
+        }
+    }
+
+    pub fn as_str(&self) -> Option<&String> {
+        match *self {
+            BenObject::S(ref x) => Some(x),
+            _ => None
+        }
+    }
+
+    pub fn as_list(&self) -> Option<&Vec<BenObject>> {
+        match *self {
+            BenObject::L(ref x) => Some(x),
+            _ => None
+        }
+    }
+
+    pub fn as_dict(&self) -> Option<&HashMap<String, BenObject>> {
+        match *self {
+            BenObject::D(ref x) => Some(x),
+            _ => None
+        }
+    }
+
     pub fn decode<I>(bytes: &mut I) -> Result<Self, String>
         where I: Iterator<Item=u8>
     {
