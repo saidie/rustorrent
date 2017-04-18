@@ -1,12 +1,46 @@
+use std::borrow::Borrow;
 use std::collections::HashMap;
 use std::iter::Peekable;
+use std::str;
+use std::hash::Hash;
+use std::hash::Hasher;
+use std::fmt::Formatter;
+use std::fmt::Error;
+use std::fmt::Debug;
+
+#[derive(PartialEq, Eq)]
+pub struct ByteString(pub Vec<u8>);
+
+impl Debug for ByteString {
+    fn fmt(&self, f: &mut Formatter) -> Result<(), Error> {
+        let ByteString(ref s) = *self;
+        let x : &str = unsafe { str::from_utf8_unchecked(s.as_slice()) };
+        Debug::fmt(x, f)
+    }
+}
+
+impl Hash for ByteString {
+    fn hash<H>(&self, state: &mut H)
+        where H: Hasher
+    {
+        let ByteString(ref s) = *self;
+        unsafe { str::from_utf8_unchecked(s.as_slice()).hash(state) }
+    }
+}
+
+impl Borrow<str> for ByteString {
+    fn borrow(&self) -> &str {
+        let ByteString(ref s) = *self;
+        unsafe { str::from_utf8_unchecked(s.as_slice()) }
+    }
+}
 
 #[derive(PartialEq, Debug)]
 pub enum BenObject {
     I(i64),
-    S(String),
+    S(ByteString),
     L(Vec<BenObject>),
-    D(HashMap<String, BenObject>)
+    D(HashMap<ByteString, BenObject>)
 }
 
 impl BenObject {
@@ -18,7 +52,7 @@ impl BenObject {
         }
     }
 
-    pub fn as_str(&self) -> Option<&String> {
+    pub fn as_str(&self) -> Option<&ByteString> {
         match *self {
             BenObject::S(ref x) => Some(x),
             _ => None
@@ -32,7 +66,7 @@ impl BenObject {
         }
     }
 
-    pub fn as_dict(&self) -> Option<&HashMap<String, BenObject>> {
+    pub fn as_dict(&self) -> Option<&HashMap<ByteString, BenObject>> {
         match *self {
             BenObject::D(ref x) => Some(x),
             _ => None
@@ -127,9 +161,9 @@ impl BenObject {
         if !Self::skip_if_match(bytes, ':') {
             return Err("parsing string failed: expected ':'".to_string())
         }
-        let buf: Vec<_> = bytes.by_ref().take(len).collect();
+        let buf = bytes.by_ref().take(len).collect::<Vec<_>>();
         if buf.len() == len {
-            Ok(BenObject::S(String::from_utf8_lossy(buf.as_slice()).into_owned()))
+            Ok(BenObject::S(ByteString(buf)))
         }
         else {
             Err("parsing string failed: length mismatches".to_string())
