@@ -1,37 +1,30 @@
-use std::borrow::Borrow;
 use std::collections::HashMap;
+use std::fmt::{Display,Debug,Error,Formatter};
 use std::iter::Peekable;
-use std::str;
-use std::hash::Hash;
-use std::hash::Hasher;
-use std::fmt::Formatter;
-use std::fmt::Error;
-use std::fmt::Debug;
 
-#[derive(PartialEq, Eq)]
+#[derive(PartialEq, Eq, Hash)]
 pub struct ByteString(pub Vec<u8>);
+
+impl Display for ByteString {
+    fn fmt(&self, f: &mut Formatter) -> Result<(), Error> {
+        let ByteString(ref s) = *self;
+        Display::fmt(&String::from_utf8_lossy(s.as_slice()).into_owned(), f)
+    }
+}
 
 impl Debug for ByteString {
     fn fmt(&self, f: &mut Formatter) -> Result<(), Error> {
-        let ByteString(ref s) = *self;
-        let x : &str = unsafe { str::from_utf8_unchecked(s.as_slice()) };
-        Debug::fmt(x, f)
+        Display::fmt(&self, f)
     }
 }
 
-impl Hash for ByteString {
-    fn hash<H>(&self, state: &mut H)
-        where H: Hasher
-    {
-        let ByteString(ref s) = *self;
-        unsafe { str::from_utf8_unchecked(s.as_slice()).hash(state) }
-    }
+pub trait ToByteString {
+    fn to_bytestring(&self) -> ByteString;
 }
 
-impl Borrow<str> for ByteString {
-    fn borrow(&self) -> &str {
-        let ByteString(ref s) = *self;
-        unsafe { str::from_utf8_unchecked(s.as_slice()) }
+impl ToByteString for str {
+    fn to_bytestring(&self) -> ByteString {
+        ByteString(self.as_bytes().to_vec())
     }
 }
 
