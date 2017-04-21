@@ -1,14 +1,24 @@
+use std::borrow::Borrow;
 use std::collections::HashMap;
 use std::fmt::{Display,Debug,Error,Formatter};
 use std::iter::Peekable;
+use std::ops::Deref;
 
 #[derive(PartialEq, Eq, Hash)]
 pub struct ByteString(pub Vec<u8>);
 
+impl Deref for ByteString {
+    type Target = [u8];
+
+    fn deref(&self) -> &[u8] {
+        let ByteString(ref s) = *self;
+        s.as_slice()
+    }
+}
+
 impl Display for ByteString {
     fn fmt(&self, f: &mut Formatter) -> Result<(), Error> {
-        let ByteString(ref s) = *self;
-        Display::fmt(&String::from_utf8_lossy(s.as_slice()).into_owned(), f)
+        Display::fmt(&String::from_utf8_lossy(self.deref()).into_owned(), f)
     }
 }
 
@@ -18,13 +28,9 @@ impl Debug for ByteString {
     }
 }
 
-pub trait ToByteString {
-    fn to_bytestring(&self) -> ByteString;
-}
-
-impl ToByteString for str {
-    fn to_bytestring(&self) -> ByteString {
-        ByteString(self.as_bytes().to_vec())
+impl Borrow<[u8]> for ByteString {
+    fn borrow(&self) -> &[u8] {
+        self.deref()
     }
 }
 
